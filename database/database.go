@@ -1,3 +1,4 @@
+// Package databaseFunctions provides functions for reading, writing, and modifying the bitcoin_wallet.db
 package databaseFunctions
 
 import (
@@ -6,15 +7,13 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"time"
 )
 
-type Transaction = transaction_types.Transaction //TODO: maybe change this later
 var databaseDriver = "sqlite3"
 var databasePath = "bitcoin_wallet.db"
 
-func Create_New_Transaction(value float64) {
+func CreateNewTransaction(value float64) {
 	db := openDatabase()
 	defer db.Close()
 
@@ -26,44 +25,41 @@ func Create_New_Transaction(value float64) {
 	VALUES (?, ?, ?, ?);
 	`
 	current_time := time.Now()
+	formattedTime := current_time.Format("2006-01-02  15:04:05")
 
-	_, err = db.Exec(insertTransactionQuery, newTransactionID, value, false, current_time)
+	_, err = db.Exec(insertTransactionQuery, newTransactionID, value, false, formattedTime)
 	ErrorHandler(err)
 }
 
-func GetAllTransactions() []Transaction {
+func GetAllTransactions() ([]transaction_types.Transaction, error) {
 	db := openDatabase()
 	defer db.Close()
 
-	allTransactions := []Transaction{}
+	allTransactions := []transaction_types.Transaction{}
 
 	queryTxt := `SELECT * FROM transactions`
 	rows, err := db.Query(queryTxt)
 
 	if err != nil {
-		fmt.Println(err)
+		return allTransactions, err
 	}
 
-	// err = rows.Scan(&transaction.Transaction_ID, &transaction.Amount, &transaction.Spent, &transaction.Created_at)
 	for rows.Next() {
-		transaction := Transaction{}
+		transaction := transaction_types.Transaction{}
 		err = rows.Scan(&transaction.Transaction_ID, &transaction.Amount, &transaction.Spent, &transaction.Created_at)
 		if err != nil {
-			fmt.Println(err)
+			return []transaction_types.Transaction{}, err
 		}
 		allTransactions = append(allTransactions, transaction)
 	}
 
+	err = db.Close()
+
 	if err != nil {
-		fmt.Println("Error while scanning transaction: ", err)
-		os.Exit(1)
+		return []transaction_types.Transaction{}, err
 	}
 
-	// fmt.Println(allTransactions)
-
-	db.Close()
-
-	return allTransactions
+	return allTransactions, nil
 }
 
 func Mark_Transaction_Used(transactionID string) {
@@ -92,9 +88,11 @@ func openDatabase() *sql.DB {
 }
 
 func ErrorHandler(err error) {
-	fmt.Println(err)
-	print("exiting now...")
-	// os.Exit(1)
+	if err != nil {
+		fmt.Println(err)
+		print("exiting now...")
+		// os.Exit(1)
+	}
 }
 
 // generateTransactionID generates a random unique hexadecimal string.
