@@ -113,7 +113,7 @@ func showBalance(w http.ResponseWriter, r *http.Request) {
 // of the operation.
 func spendBalance(w http.ResponseWriter, r *http.Request) {
 	// EXAMPLE:
-	// http://localhost:8080/SpendBalance?amount=50
+	// http://localhost:8080/spendBalance?amount=50
 
 	request_value_string := r.URL.Query().Get("amount")
 
