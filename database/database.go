@@ -7,26 +7,35 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"time"
 )
 
 var databaseDriver = "sqlite3"
 var databasePath = "bitcoin_wallet.db"
 
-func CreateNewTransaction(value float64) {
+// CreateNewTransaction creates a new transaction record in the database.
+// It opens a database connection, starts a new transaction, generates a new transaction ID,
+// and inserts a new transaction record with the specified amount, marked as unspent, and the
+// current timestamp.
+// If any operation fails, it rolls back the transaction and logs the error.
+func CreateNewTransaction(value float64) error {
 	db := openDatabase()
 	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 
 	defer tx.Rollback()
 
 	newTransactionID, err := generateTransactionID()
-	ErrorHandler(err)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 
 	insertTransactionQuery := `
 	INSERT INTO transactions (id, amount, spent, created_at)
@@ -39,12 +48,24 @@ func CreateNewTransaction(value float64) {
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
+		return err
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	db.Close()
+
+	return nil
 }
 
+// GetAllTransactions retrieves all transaction records from the database.
+// It opens a database connection, executes a SELECT query to fetch all transactions,
+// scans the results into a slice of Transaction structs, and then returns this slice.
+// If any operation fails, it returns an empty slice and the error encountered.
 func GetAllTransactions() ([]transaction_types.Transaction, error) {
 	db := openDatabase()
 	defer db.Close()
@@ -76,28 +97,40 @@ func GetAllTransactions() ([]transaction_types.Transaction, error) {
 	return allTransactions, nil
 }
 
-func Mark_Transaction_Used(transactionID string) {
+// Mark_Transaction_Used marks a transaction as used in the database.
+// It opens a database connection, prepares an SQL UPDATE statement to set the 'spent'
+// field of a transaction to true based on the provided transaction ID, and executes
+// the statement. If any operation fails, it logs the error.
+func MarkTransactionUsed(transactionID string) error {
 	db := openDatabase()
 	defer db.Close()
 
-	stmt, err := db.Prepare("UPDATE transactions SET spent = true WHERE id = ?") //TODO: if I remember correctly this prepare thing is not really needed if I only call this once with one value
-	//hovever if I change this so the db connection will be open in the loop and I can use the same db connection it will be more optimized... TLDR: look into this later.
-	ErrorHandler(err)
-	defer stmt.Close()
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	// Execute the statement.
-	_, err = stmt.Exec(transactionID)
-	ErrorHandler(err)
+	queryTxt := "UPDATE transactions SET spent = true WHERE id = ?"
+	_, err = tx.Exec(queryTxt, transactionID)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	tx.Commit()
+	db.Close()
+
+	return nil
 }
 
-// TODO: work on this.
 func openDatabase() *sql.DB {
+	//TODO: return when there is an error, and make sure that everythiing that uses this function is also hanlding the error.
 	database, err := sql.Open(databaseDriver, databasePath)
 	if err != nil {
 		fmt.Println("Error opening database: ", err)
+		os.Exit(1)
 	}
-	// defer database.Close()
-
 	return database
 }
 

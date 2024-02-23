@@ -1,4 +1,4 @@
-// Package transaction_types currently provides only the "Transaction" and APIResponse type
+// Package transaction_types provides the "Transaction" and "APIResponse" type structs.
 package transaction_types
 
 import "time"

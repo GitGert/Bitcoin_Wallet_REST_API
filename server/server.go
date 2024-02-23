@@ -207,11 +207,33 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 
 	for _, index_value := range unspentTransactionsIndexes {
 		transactionID := allTransactions[index_value].Transaction_ID
-		db.Mark_Transaction_Used(transactionID)
+		err = db.MarkTransactionUsed(transactionID)
+
+		if err != nil {
+			fmt.Println("Error while trying to mark transactions as spent: ", err)
+
+			response := transactionTypes.APIResponse{
+				Data:   "Database error",
+				Errors: []string{"Error - Failed to edit transaction"},
+			}
+
+			sendHTTPResponse(w, response, http.StatusInternalServerError)
+			return
+		}
 	}
 	fmt.Println("difference: ", difference)
 	if difference != 0.0 {
-		db.CreateNewTransaction(difference)
+		err = db.CreateNewTransaction(difference)
+		if err != nil {
+			print("error creating transaction: ", err)
+			response := transactionTypes.APIResponse{
+				Data:   "Internal Server Error - Database Error",
+				Errors: []string{"Error - Database Error"},
+			}
+
+			sendHTTPResponse(w, response, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	response := transactionTypes.APIResponse{
