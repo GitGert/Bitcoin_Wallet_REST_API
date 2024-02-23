@@ -17,6 +17,14 @@ func CreateNewTransaction(value float64) {
 	db := openDatabase()
 	defer db.Close()
 
+	tx, err := db.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer tx.Rollback()
+
 	newTransactionID, err := generateTransactionID()
 	ErrorHandler(err)
 
@@ -27,8 +35,14 @@ func CreateNewTransaction(value float64) {
 	current_time := time.Now()
 	formattedTime := current_time.Format("2006-01-02  15:04:05")
 
-	_, err = db.Exec(insertTransactionQuery, newTransactionID, value, false, formattedTime)
-	ErrorHandler(err)
+	_, err = tx.Exec(insertTransactionQuery, newTransactionID, value, false, formattedTime)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+	}
+
+	tx.Commit()
+	db.Close()
 }
 
 func GetAllTransactions() ([]transaction_types.Transaction, error) {
