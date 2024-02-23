@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"time"
 )
 
@@ -20,7 +19,10 @@ var databasePath = "bitcoin_wallet.db"
 // current timestamp.
 // If any operation fails, it rolls back the transaction and logs the error.
 func CreateNewTransaction(value float64) error {
-	db := openDatabase()
+	db, err := openDatabase()
+	if err != nil {
+		return err
+	}
 	defer db.Close()
 
 	tx, err := db.Begin()
@@ -67,7 +69,11 @@ func CreateNewTransaction(value float64) error {
 // scans the results into a slice of Transaction structs, and then returns this slice.
 // If any operation fails, it returns an empty slice and the error encountered.
 func GetAllTransactions() ([]transaction_types.Transaction, error) {
-	db := openDatabase()
+	db, err := openDatabase()
+	if err != nil {
+		return nil, err
+	}
+
 	defer db.Close()
 
 	allTransactions := []transaction_types.Transaction{}
@@ -102,7 +108,10 @@ func GetAllTransactions() ([]transaction_types.Transaction, error) {
 // field of a transaction to true based on the provided transaction ID, and executes
 // the statement. If any operation fails, it logs the error.
 func MarkTransactionUsed(transactionID string) error {
-	db := openDatabase()
+	db, err := openDatabase()
+	if err != nil {
+		return err
+	}
 	defer db.Close()
 
 	tx, err := db.Begin()
@@ -124,25 +133,21 @@ func MarkTransactionUsed(transactionID string) error {
 	return nil
 }
 
-func openDatabase() *sql.DB {
-	//TODO: return when there is an error, and make sure that everythiing that uses this function is also hanlding the error.
+// openDatabase opens a connection to the database using the specified database driver
+// and path. It returns a pointer to the sql.DB object representing the database connection
+// and an error if any occurs during the process.
+func openDatabase() (*sql.DB, error) {
 	database, err := sql.Open(databaseDriver, databasePath)
 	if err != nil {
-		fmt.Println("Error opening database: ", err)
-		os.Exit(1)
+		fmt.Println("Error while opening database: ", err)
+		return nil, err
 	}
-	return database
+	return database, nil
 }
 
-func ErrorHandler(err error) {
-	if err != nil {
-		fmt.Println(err)
-		print("exiting now...")
-		// os.Exit(1)
-	}
-}
-
-// generateTransactionID generates a random unique hexadecimal string.
+// generateTransactionID generates a unique transaction ID by creating a random 16-byte
+// sequence and encoding it as a hexadecimal string. This ID can be used as a unique identifier
+// for transactions in the database.
 func generateTransactionID() (string, error) {
 	bytes := make([]byte, 16) // Generate  16 random bytes
 	if _, err := rand.Read(bytes); err != nil {
