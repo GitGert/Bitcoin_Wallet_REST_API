@@ -27,7 +27,7 @@ git clone https://github.com/GitGert/Bitcoin_Wallet_REST_API
 
 ## Usage
 
-In order to run the application you will need to install [golang](https://go.dev/doc/install) and [SQLite](https://www.sqlite.org/download.html)
+In order to run the application you will need have [Golang](https://go.dev/doc/install) and [SQLite](https://www.sqlite.org/download.html) installed on your machine.
 
 * navigate to the root folder:
 ``` bash
@@ -38,16 +38,35 @@ cd Bitcoin_Wallet_REST_API
 ``` bash
 go run main.go
 ```
-golangs dependencies should resolve themselves when running "main.go" for the first time.
-* to test you will need to either use a browser or a tool like curl (linux/IOS)
+Golangs dependencies should resolve themselves when running "main.go" for the first time.
+* to test you will need to either use a browser or a CLI tool like [cURL](https://blog.hubspot.com/website/curl-command)
 
-LINKS:
+API ENDPOINT LINKS:
 - http://localhost:8080/listTransactions
 - http://localhost:8080/showBalance
 - http://localhost:8080/spendBalance?amount=100
 
 you can change the amount of euros you wish to spend by changing the number
 after "/spendBalance?amount="
+
+* in order to add funds connect to the database:
+```sql
+sqlite3 bitcoin_wallet.db
+```
+* and paste the query:
+```sql
+INSERT INTO transactions (id, amount, spent, created_at) VALUES (
+    'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5',
+    10.0,
+    0,
+    '1000-01-01 00:00:00'
+);
+```
+
+
+
+
+
 
 
 ### Author

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -19,6 +20,9 @@ var databasePath = "bitcoin_wallet.db"
 // current timestamp.
 // If any operation fails, it rolls back the transaction and logs the error.
 func CreateNewTransaction(value float64) error {
+
+	value = roundToDecimalPlaces(value, 8)
+
 	db, err := openDatabase()
 	if err != nil {
 		return err
@@ -44,7 +48,8 @@ func CreateNewTransaction(value float64) error {
 	VALUES (?, ?, ?, ?);
 	`
 	current_time := time.Now()
-	formattedTime := current_time.Format("2006-01-02  15:04:05")
+	formattedTime := current_time.Format("2006-01-02 15:04:05")
+	fmt.Println(formattedTime)
 
 	_, err = tx.Exec(insertTransactionQuery, newTransactionID, value, false, formattedTime)
 	if err != nil {
@@ -62,6 +67,17 @@ func CreateNewTransaction(value float64) error {
 	db.Close()
 
 	return nil
+}
+
+func roundToDecimalPlaces(number float64, decimalPlaces int) float64 {
+	// Convert the number to a string with the desired precision
+	str := fmt.Sprintf("%.*f", decimalPlaces, number)
+	// Convert the string back to a float64
+	roundedNumber, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		panic(err) // Handle error appropriately
+	}
+	return roundedNumber
 }
 
 // GetAllTransactions retrieves all transaction records from the database.

@@ -24,8 +24,11 @@ func Init() {
 	mux.HandleFunc("/listTransactions", listTransactions) // List all transactions
 	mux.HandleFunc("/showBalance", showBalance)           // Show current balance in BTC and EUR
 	mux.HandleFunc("/spendBalance", spendBalance)         // New transfer, input data in EUR
+	mux.HandleFunc("/addBalance", addBalance)             // New transfer, input data in EUR
 
-	fmt.Println("starting server at http://localhost:8080")
+	fmt.Println("starting server at \033[32mhttp://localhost:8080\033[0m")
+	fmt.Println("In order to stop the server use :\033[31m CTRL + C\033[0m")
+
 	http.ListenAndServe(":8080", mux) //define REST API endpoint
 }
 
@@ -241,7 +244,88 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendHTTPResponse(w, response, http.StatusOK)
+}
 
+// addBalance is an HTTP handler that processes requests to add a specified amount
+// of EUR to the Bitcoin wallet. It calculates the equivalent amount of Bitcoin for the
+// given EUR value, fetches the current Bitcoin to EUR exchange rate, and creates a
+// new transaction in the database.
+func addBalance(w http.ResponseWriter, r *http.Request) {
+	// EXAMPLE:
+	// http://localhost:8080/addBalance?amount=50
+	request_value_string := r.URL.Query().Get("amount") //input value will be in EUR
+
+	if request_value_string == "" {
+		fmt.Println("Error - No EUR value provided")
+		response := transactionTypes.APIResponse{
+			Data:   "please provide a value",
+			Errors: []string{"Error - No EUR value provided"},
+		}
+		sendHTTPResponse(w, response, http.StatusBadRequest)
+		return
+	}
+
+	if !isStringValidEURValue(request_value_string) {
+		fmt.Println("Error: poor input value")
+		response := transactionTypes.APIResponse{
+			Data:   "A poor value was provided - please make sure to provide a valid number",
+			Errors: []string{"Error - Input value was improper"},
+		}
+		sendHTTPResponse(w, response, http.StatusBadRequest)
+		return
+	}
+
+	requestValueAsFloat, err := strconv.ParseFloat(request_value_string, 64)
+	if err != nil {
+		fmt.Println("Error parsing string to float64:", err)
+		response := transactionTypes.APIResponse{
+			Data:   "Internal Server Error - Failed to fetch Bitcoin Value",
+			Errors: []string{"Internal Server Error"},
+		}
+		sendHTTPResponse(w, response, http.StatusInternalServerError)
+		return
+	}
+
+	bitcoinvalueAsFloat64, err := getBitcoinValue()
+	if err != nil {
+		fmt.Println("GetBitcoinValue Error: ", err)
+		response := transactionTypes.APIResponse{
+			Data:   "Internal Server Error - Failed to fetch Bitcoin Value",
+			Errors: []string{"Internal Server Error"},
+		}
+		sendHTTPResponse(w, response, http.StatusInternalServerError)
+		return
+	}
+
+	requestValueInBitcoin := requestValueAsFloat / bitcoinvalueAsFloat64
+
+	if requestValueAsFloat < 0.00001 {
+		fmt.Println("input amount cannot be smaller than 0.00001 BTC")
+		fmt.Println("GetBitcoinValue Error: ", err)
+		response := transactionTypes.APIResponse{
+			Data:   "Bad Request - The minimum amount for a transfer is 0.00001 BTC",
+			Errors: []string{"Error - Bad Request. BTC amount cannot be smaller than 0.00001"},
+		}
+		sendHTTPResponse(w, response, http.StatusBadRequest)
+		return
+	}
+
+	if err = db.CreateNewTransaction(requestValueInBitcoin); err != nil {
+		print("error creating transaction: ", err)
+
+		response := transactionTypes.APIResponse{
+			Data:   "Internal Server Error - Database Error",
+			Errors: []string{"Error - Database Error"},
+		}
+
+		sendHTTPResponse(w, response, http.StatusInternalServerError)
+	}
+
+	response := transactionTypes.APIResponse{
+		Data: request_value_string + " EUR has been added",
+	}
+
+	sendHTTPResponse(w, response, http.StatusOK)
 }
 
 // getBitcoinValue fetches the current Bitcoin to EUR exchange rate from an external API.
@@ -306,5 +390,11 @@ func isStringValidEURValue(input string) bool {
 func sendHTTPResponse(w http.ResponseWriter, response transactionTypes.APIResponse, httpSatus int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpSatus)
-	json.NewEncoder(w).Encode(response)
+	// json.NewEncoder(w).Encode(response)
+	jsonData, err := json.MarshalIndent(response, "", " ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonData)
 }
