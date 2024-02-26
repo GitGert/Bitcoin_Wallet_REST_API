@@ -246,10 +246,9 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 	sendHTTPResponse(w, response, http.StatusOK)
 }
 
-// addBalance is an HTTP handler that processes requests to add a specified amount
-// of EUR to the Bitcoin wallet. It calculates the equivalent amount of Bitcoin for the
-// given EUR value, fetches the current Bitcoin to EUR exchange rate, and creates a
-// new transaction in the database.
+// addBalance processes requests to add a specified amount of EUR to the Bitcoin wallet.
+// It calculates the equivalent amount of Bitcoin for the given EUR value, fetches
+// the current Bitcoin to EUR exchange rate, and creates a new transaction in the database.
 func addBalance(w http.ResponseWriter, r *http.Request) {
 	// EXAMPLE:
 	// http://localhost:8080/addBalance?amount=50

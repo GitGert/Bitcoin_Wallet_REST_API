@@ -49,7 +49,6 @@ func CreateNewTransaction(value float64) error {
 	`
 	current_time := time.Now()
 	formattedTime := current_time.Format("2006-01-02 15:04:05")
-	fmt.Println(formattedTime)
 
 	_, err = tx.Exec(insertTransactionQuery, newTransactionID, value, false, formattedTime)
 	if err != nil {
