@@ -3,8 +3,8 @@ package server
 
 import (
 	db "bitcoin_wallet_rest_api/database"
-	financialDataTypes "bitcoin_wallet_rest_api/financial_data_types"
-	transactionTypes "bitcoin_wallet_rest_api/transaction_types"
+	financialDataTypes "bitcoin_wallet_rest_api/financialDataTypes"
+	transactionTypes "bitcoin_wallet_rest_api/transactionTypes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -206,7 +206,7 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 	difference := unspentMoneyTotal - requestValueInBitcoin
 
 	for _, index_value := range unspentTransactionsIndexes {
-		transactionID := allTransactions[index_value].Transaction_ID
+		transactionID := allTransactions[index_value].TransactionID
 		err = db.MarkTransactionUsed(transactionID)
 
 		if err != nil {

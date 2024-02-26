@@ -2,7 +2,7 @@
 package databaseFunctions
 
 import (
-	transaction_types "bitcoin_wallet_rest_api/transaction_types"
+	transaction_types "bitcoin_wallet_rest_api/transactionTypes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -87,7 +87,7 @@ func GetAllTransactions() ([]transaction_types.Transaction, error) {
 
 	for rows.Next() {
 		transaction := transaction_types.Transaction{}
-		err = rows.Scan(&transaction.Transaction_ID, &transaction.Amount, &transaction.Spent, &transaction.Created_at)
+		err = rows.Scan(&transaction.TransactionID, &transaction.Amount, &transaction.Spent, &transaction.CreatedAt)
 		if err != nil {
 			return []transaction_types.Transaction{}, err
 		}

@@ -1,5 +1,5 @@
 // Package financial_data_types provides the Ticker type struct
-package financial_data_types
+package financialDataTypes
 
 // Ticker represents the structure of a successful response from the http://api-cryptopia.adca.sh/v1/prices/ticker API.
 type Ticker struct {
