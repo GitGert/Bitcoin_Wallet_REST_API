@@ -82,7 +82,7 @@ func getTotalAmountOfBitcoin(transaction []transactionTypes.Transaction) float64
 }
 
 // sendInternalServerErrorResponse sends a  500 Internal Server Error response to the client
-func sendInternalServerErrorReponse(w http.ResponseWriter) {
+func sendInternalServerErrorResponse(w http.ResponseWriter) {
 	response := transactionTypes.APIResponse{
 		Data:   "Internal Server Error",
 		Errors: []string{"Error - Internal Server Error"},

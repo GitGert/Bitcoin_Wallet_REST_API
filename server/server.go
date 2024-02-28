@@ -37,7 +37,7 @@ func listTransactions(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("Database error:", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
@@ -57,7 +57,7 @@ func showBalance(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("Database error:", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
@@ -120,7 +120,7 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 	requestValueAsFloat, err := strconv.ParseFloat(request_value_string, 64)
 	if err != nil {
 		fmt.Println("Error parsing string to float64:", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
@@ -150,7 +150,7 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 	allTransactions, err := db.GetAllTransactions()
 	if err != nil {
 		fmt.Println("Database error:", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
@@ -170,14 +170,14 @@ func spendBalance(w http.ResponseWriter, r *http.Request) {
 
 	if err = markTransactionsUsed(unspentTransactionsIndexesList, allTransactions); err != nil {
 		fmt.Println("Error while trying to mark transactions as spent: ", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
 	if difference != 0.0 {
 		if err = db.CreateNewTransaction(difference); err != nil {
 			print("error creating transaction: ", err)
-			sendInternalServerErrorReponse(w)
+			sendInternalServerErrorResponse(w)
 			return
 		}
 	}
@@ -218,7 +218,7 @@ func addBalance(w http.ResponseWriter, r *http.Request) {
 	requestValueAsFloat, err := strconv.ParseFloat(request_value_string, 64)
 	if err != nil {
 		fmt.Println("Error parsing string to float64:", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 		return
 	}
 
@@ -247,7 +247,7 @@ func addBalance(w http.ResponseWriter, r *http.Request) {
 
 	if err = db.CreateNewTransaction(requestValueInBitcoin); err != nil {
 		print("error creating transaction: ", err)
-		sendInternalServerErrorReponse(w)
+		sendInternalServerErrorResponse(w)
 	}
 
 	response := transactionTypes.APIResponse{
